@@ -5,7 +5,9 @@ import os
 from collections import OrderedDict
 from nltk.tokenize import sent_tokenize
 
-from resources import BASE_DIR
+#from resources import BASE_DIR
+# Get the current working directory
+BASE_DIR = os.getcwd()
 
 class CorpusReader:
     def __init__(self,topic_path,base_path=BASE_DIR,):

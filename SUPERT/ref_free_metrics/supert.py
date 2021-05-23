@@ -9,7 +9,8 @@ from nltk.corpus import stopwords
 from nltk.tokenize import sent_tokenize
 import copy
 
-from resources import BASE_DIR, LANGUAGE
+#from resources import BASE_DIR, LANGUAGE
+LANGUAGE = 'en'
 from ref_free_metrics.similarity_scorer import parse_documents
 
 class Supert():
