@@ -10,14 +10,15 @@ from nltk.tokenize import sent_tokenize
 import copy
 
 #from resources import BASE_DIR, LANGUAGE
-LANGUAGE = 'en'
+LANGUAGE = 'english'
 from ref_free_metrics.similarity_scorer import parse_documents
 
 class Supert():
-    def __init__(self, ref_metric='top15', sim_metric='f1'):
+    def __init__(self, docs, ref_metric='top15', sim_metric='f1'):
         self.bert_model = SentenceTransformer('bert-large-nli-stsb-mean-tokens')
         self.ref_metric = ref_metric
         self.sim_metric = sim_metric
+        self.load_documents(docs)
 
     def load_documents(self, docs):
         # pre-process the documents
@@ -77,13 +78,13 @@ class Supert():
 
     def kill_stopwords(self, sent_idx, all_token_vecs, all_tokens):
         for i,si in enumerate(sent_idx):
-            assert len(all_token_vecs[si]) == len(all_tokens[si])
+            assert len(all_token_vecs[i]) == len(all_tokens[i])
             if i == 0:
-                full_vec = copy.deepcopy(all_token_vecs[si])
-                full_token = copy.deepcopy(all_tokens[si])
+                full_vec = copy.deepcopy(all_token_vecs[i])
+                full_token = copy.deepcopy(all_tokens[i])
             else:
-                full_vec = np.row_stack((full_vec, all_token_vecs[si]))
-                full_token.extend(all_tokens[si])
+                full_vec = np.row_stack((full_vec, all_token_vecs[i]))
+                full_token.extend(all_tokens[i])
         mystopwords = list(set(stopwords.words(LANGUAGE)))
         mystopwords.extend(['[cls]','[sep]'])
         wanted_idx = [j for j,tk in enumerate(full_token) if tk.lower() not in mystopwords]
