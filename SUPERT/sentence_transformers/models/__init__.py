@@ -2,6 +2,7 @@ from .BERT import BERT
 from .BoW import BoW
 from .CNN import CNN
 from .Dense import Dense
+from .DistilBERT import DistilBERT
 from .LSTM import LSTM
 from .Pooling import Pooling
 from .RoBERTa import RoBERTa
