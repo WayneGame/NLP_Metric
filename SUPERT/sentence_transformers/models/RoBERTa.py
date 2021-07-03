@@ -22,7 +22,6 @@ class RoBERTa(nn.Module):
             max_seq_length = 510
         self.max_seq_length = max_seq_length
 
-
         self.roberta = RobertaModel.from_pretrained(model_name_or_path)
         self.tokenizer = RobertaTokenizer.from_pretrained(model_name_or_path, do_lower_case=do_lower_case)
         self.cls_token_id = self.tokenizer.convert_tokens_to_ids([self.tokenizer.cls_token])[0]
@@ -44,6 +43,9 @@ class RoBERTa(nn.Module):
         Tokenizes a text and maps tokens to token-ids
         """
         return self.tokenizer.convert_tokens_to_ids(self.tokenizer.tokenize(text))
+    
+    def ids_to_tokens(self, ids: List[int]) -> List[str]:
+        return self.tokenizer.convert_ids_to_tokens(ids)
 
     def get_sentence_features(self, tokens: List[str], pad_seq_length: int):
         """
@@ -84,12 +86,12 @@ class RoBERTa(nn.Module):
         self.roberta.save_pretrained(output_path)
         self.tokenizer.save_pretrained(output_path)
 
-        with open(os.path.join(output_path, 'sentence_roberta_config.json'), 'w') as fOut:
+        with open(os.path.join(output_path, 'sentence_bert_config.json'), 'w') as fOut:
             json.dump(self.get_config_dict(), fOut, indent=2)
 
     @staticmethod
     def load(input_path: str):
-        with open(os.path.join(input_path, 'sentence_roberta_config.json')) as fIn:
+        with open(os.path.join(input_path, 'sentence_bert_config.json')) as fIn:
             config = json.load(fIn)
         return RoBERTa(model_name_or_path=input_path, **config)
 

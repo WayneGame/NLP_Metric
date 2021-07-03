@@ -69,7 +69,7 @@ class SentenceTransformer(nn.Sequential):
                 logging.info("Load SentenceTransformer from folder: {}".format(model_path))
                 with open(os.path.join(model_path, 'modules.json')) as fIn:
                     contained_modules = json.load(fIn)
-
+                print(contained_modules)
                 modules = OrderedDict()
                 for module_config in contained_modules:
                     module_class = import_from_string(module_config['type'])
