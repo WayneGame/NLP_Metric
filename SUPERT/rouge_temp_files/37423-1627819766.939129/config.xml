@@ -1,0 +1,16 @@
+<EVAL ID="1">
+<PEER-ROOT>
+/Users/dwarakvittal/Documents/Projekte/NLP_Metric/SUPERT/rouge_temp_files/37423-1627819766.939129
+</PEER-ROOT>
+<MODEL-ROOT>
+/Users/dwarakvittal/Documents/Projekte/NLP_Metric/SUPERT/data/topic_1/references
+</MODEL-ROOT>
+<INPUT-FORMAT TYPE="SPL">
+</INPUT-FORMAT>
+<PEERS>
+<P ID="1">reference_summary.txt</P>
+</PEERS>
+<MODELS>
+<M ID="t">ref1.txt</M>
+</MODELS>
+</EVAL>

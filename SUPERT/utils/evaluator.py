@@ -1,6 +1,10 @@
 from rouge.rouge import Rouge
 from resources import *
 from collections import OrderedDict
+import os
+
+BASE_DIR =  os.getcwd() + "/SUPERT/" #os.path.dirname(os.path.abspath(__file__)) + "/../"
+ROUGE_DIR = os.path.join(BASE_DIR,'rouge','ROUGE-RELEASE-1.5.5/') #do not delete the '/' in the end
 
 def add_result(all_dic,result):
     for metric in result:

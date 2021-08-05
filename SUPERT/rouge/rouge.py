@@ -1,3 +1,4 @@
+import subprocess
 import sys
 sys.path.append('../')
 
@@ -9,6 +10,7 @@ from subprocess import check_output
 import re
 import shutil
 import random
+import shlex
 
 
 class Rouge(object):
@@ -74,10 +76,14 @@ class Rouge(object):
         return result_dict
 
     def execute_rouge(self):
-        cmd = "perl " + self.ROUGE_DIR + "ROUGE-1.5.5.pl -e " + self.ROUGE_DIR + "data " + self.ROUGE_ARGS + ' -a ' + self.temp_config_file
-        #print("execute_rouge command is" , cmd)
-        
-        return check_output(cmd, shell=True)
+        #cmd = "perl " + self.ROUGE_DIR + "ROUGE-1.5.5.pl -e " + self.ROUGE_DIR + "data " + self.ROUGE_ARGS + ' -a ' + self.temp_config_file
+        cmd = "perl " + self.ROUGE_DIR + "ROUGE-1.5.5.pl"
+        print("execute_rouge command is" , cmd)
+        #s = cmd.split()
+        #print(s)
+        o = subprocess.call(cmd, shell=True)
+        print(o)
+        return o
 
     def clean(self):
         shutil.rmtree(self.temp_dir)
@@ -91,6 +97,7 @@ class Rouge(object):
         write_to_file(config, self.temp_config_file, True)
 
         result = self.execute_rouge()
+        print(result)
 
         result_dict = self.extract_results(result.decode('utf-8'))
 
