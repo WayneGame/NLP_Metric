@@ -1,8 +1,7 @@
 from __future__ import absolute_import, division, print_function
 import numpy as np
 import torch
-import string
-from pyemd import emd
+from pyemd import emd_with_flow
 
 def padding(arr, pad_token, dtype=torch.long):
     lens = torch.LongTensor([len(a) for a in arr])
@@ -15,10 +14,37 @@ def padding(arr, pad_token, dtype=torch.long):
     return padded, lens, mask
 
 def bert_encode(model, x, attention_mask):
-    model.eval()
-    with torch.no_grad():
-        output, _, x_encoded_layers, _ = model(input_ids = x, token_type_ids = None, attention_mask = attention_mask)
-    return x_encoded_layers
+
+
+
+    if str(model)[:15] == "DistilBertModel":
+        model.eval()
+        with torch.no_grad():
+            outputs = model(input_ids = x, attention_mask = attention_mask)
+
+        return outputs[1]
+    elif str(model)[:18] == "XLMWithLMHeadModel":
+        model.eval()
+        with torch.no_grad():
+
+            a, b , c = model.generate(input_ids = x,token_type_ids=None, attention_mask = attention_mask, max_length = 100)
+            print(b)
+        return b
+    elif str(model)[:19] == "SentenceTransformer":
+        model.eval()
+        with torch.no_grad():
+            dict = {'input_ids' : x, 'attention_mask' : attention_mask}
+            a, b, c, d, e = model(dict)
+        return e
+
+    else:
+        model.eval()
+        with torch.no_grad():
+
+            #output, b, x_encoded_layers, d = \
+            outputs =  model(input_ids = x, token_type_ids = None, attention_mask = attention_mask)
+
+        return outputs[2]
 
 def collate_idf(arr, tokenize, numericalize, idf_dict,
                 pad="[PAD]", device='cuda:0'):
@@ -52,56 +78,27 @@ def get_bert_embedding(all_sens, model, tokenizer, idf_dict,
         for i in range(0, len(all_sens), batch_size):
             batch_embedding = bert_encode(model, padded_sens[i:i+batch_size],
                                           attention_mask=mask[i:i+batch_size])
-            batch_embedding = torch.stack(batch_embedding)
+
+            batch_embedding = torch.stack(list(batch_embedding))
             embeddings.append(batch_embedding)
             del batch_embedding
 
     total_embedding = torch.cat(embeddings, dim=-3)
+
     return total_embedding, lens, mask, padded_idf, tokens
-
-def pairwise_distances(x, y=None):
-    x_norm = (x**2).sum(1).view(-1, 1)
-    y_norm = (y**2).sum(1).view(1, -1)
-    y_t = torch.transpose(y, 0, 1)
-    dist = x_norm + y_norm - 2.0 * torch.mm(x, y_t)    
-    return torch.clamp(dist, 0.0, np.inf)
-
-def slide_window(input_, w = 3, o = 2):
-    if input_.size - w + 1 <= 0:
-        w = input_.size
-    sh = (input_.size - w + 1, w)
-    st = input_.strides * 2
-    view = np.lib.stride_tricks.as_strided(input_, strides = st, shape = sh)[0::o]
-    return view.copy().tolist()
-
-def _safe_divide(numerator, denominator):
-    return numerator / (denominator + 1e-30)
-    
-def load_ngram(ids, embedding, idf, n, o, device='cuda:0'):
-    new_a = []        
-    new_idf = []
-
-    slide_wins = slide_window(np.array(ids), w=n, o=o)
-    for slide_win in slide_wins:               
-        new_idf.append(idf[slide_win].sum().item())
-        scale = _safe_divide(idf[slide_win], idf[slide_win].sum(0)).unsqueeze(-1).to(device)
-        tmp =  (scale * embedding[slide_win]).sum(0)    
-        new_a.append(tmp)
-    new_a = torch.stack(new_a, 0).to(device)
-    return new_a, new_idf
 
 from collections import defaultdict
 
 def cross_lingual_mapping(mapping, embedding, projection, bias):
+    #print(embedding.shape)
     batch_size = embedding.shape[0]
     n_tokens = embedding.shape[1]
-    
+    #n_tokens = None
     if mapping == 'CLP':
         embedding = torch.matmul(embedding, projection)
     if mapping == 'UMD':
         embedding = embedding - (embedding * bias).sum(2, keepdim=True) * bias.repeat(batch_size, n_tokens, 1)        
     return embedding
-
 
 def lm_perplexity(model, hyps, tokenizer, batch_size=1, device='cuda:0'):
     preds = []        
@@ -123,8 +120,17 @@ def lm_perplexity(model, hyps, tokenizer, batch_size=1, device='cuda:0'):
             score = model(input_ids, labels=input_ids)[0]
             preds.append(-score.item())
     return preds
-    
-def word_mover_score(mapping, projection, bias, model, tokenizer, src, hyps, n_gram=1, batch_size=256, device='cuda:0'):
+
+def get_ngram_embs(embeddings, ngram):  
+    ngram_embs=[]
+    count = 0
+    for _ in embeddings[:len(embeddings) - ngram + 1]:  
+       ngram_embs.append(embeddings[count:count + ngram, :].mean(0))  
+       count = count+1  
+    return torch.stack(ngram_embs, 0)
+
+def word_mover_score(mapping, projection, bias, model, tokenizer, src, hyps, \
+                     n_gram=2, layer=8, dropout_rate=0.3, batch_size=256, device='cuda:0'):
     idf_dict_src = defaultdict(lambda: 1.)
     idf_dict_hyp = defaultdict(lambda: 1.)
     
@@ -137,34 +143,47 @@ def word_mover_score(mapping, projection, bias, model, tokenizer, src, hyps, n_g
                                        device=device)
         hyp_embedding, hyp_lens, hyp_masks, hyp_idf, hyp_tokens = get_bert_embedding(batch_hyps, model, tokenizer, idf_dict_hyp,
                                        device=device)
-        
+
         src_embedding = src_embedding[-1]
         hyp_embedding = hyp_embedding[-1]
 
+
         src_embedding = cross_lingual_mapping(mapping, src_embedding, projection, bias[0])
                    
-        batch_size = len(src_embedding)
-        for i in range(batch_size):   
-            src_ids = [k for k, w in enumerate(src_tokens[i]) if w not in set(string.punctuation) and '##' not in w]
-            hyp_ids = [k for k, w in enumerate(hyp_tokens[i]) if w not in set(string.punctuation) and '##' not in w]
-            
-            src_embedding_i, src_idf_i = load_ngram(src_ids, src_embedding[i], src_idf[i], n_gram, 1)
-            hyp_embedding_i, hyp_idf_i = load_ngram(hyp_ids, hyp_embedding[i], hyp_idf[i], n_gram, 1)
+        batch_size = src_embedding.shape[0]
+        
+        for i in range(batch_size):
 
-            embeddings = torch.cat([src_embedding_i, hyp_embedding_i], 0)            
-            embeddings.div_(torch.norm(embeddings, dim=-1).unsqueeze(-1) + 1e-30)             
-            distance_matrix = pairwise_distances(embeddings, embeddings)
+            src_embedding_i = get_ngram_embs(src_embedding[i, :src_lens[i], :], ngram = n_gram)
+            hyp_embedding_i = get_ngram_embs(hyp_embedding[i, :hyp_lens[i], :], ngram = n_gram)
 
-            c1 = np.zeros(len(src_idf_i) + len(hyp_idf_i))
-            c2 = np.zeros_like(c1)
+            src_idf_i = [1] * (src_lens[i] - n_gram + 1)
+            hyp_idf_i = [1] * (hyp_lens[i] - n_gram + 1)
             
-            c1[:len(src_idf_i)] = src_idf_i
-            c2[-len(hyp_idf_i):] = hyp_idf_i
+            W = torch.cat([src_embedding_i, hyp_embedding_i], 0)                
+            W.div_(torch.norm(W, dim=-1).unsqueeze(-1))       
+           
+            c1 = list(src_idf_i) + [0] * len(hyp_idf_i)
+            c2 = [0] * len(src_idf_i) + list(hyp_idf_i)
+               
+            c1 = c1 / np.sum(c1) + 1e-9 
+            c2 = c2 / np.sum(c2) + 1e-9 
+            
+            dist = torch.cdist(W, W, p=2).double().cpu().numpy()
+            flow = np.stack(emd_with_flow(c1, c2, dist)[1])
+            
+            flow = torch.from_numpy(flow[:len(src_idf_i), len(src_idf_i):])
+            dist = torch.from_numpy(dist[:len(src_idf_i), len(src_idf_i):])
 
-            score = emd(_safe_divide(c1, np.sum(c1)), 
-                        _safe_divide(c2, np.sum(c2)), 
-                        distance_matrix.double().cpu().numpy())
-            
+            # remove noisy elements in a flow
+            flow_flatten = flow.reshape(-1)
+            idx = torch.nonzero(flow_flatten)
+            threshold = flow_flatten[idx].topk(k=max(int(len(idx) * dropout_rate), 1), dim=0, largest=False)[0][-1]
+            flow[flow < threshold] = 0
+
+            score = (flow * dist).sum()            
             preds.append(1 - score) 
             
     return preds
+
+
