@@ -1,0 +1,5 @@
+Variant,Pearson Corr.,% Time BERT,% Memory BERT
+bert-base-uncased,0.336,100.0,100.0
+albert-base-v2,0.251,130.1,172.8
+roberta-base,0.285,123.2,97.9
+distilbert-base-uncased,0.318,52.9,52.7

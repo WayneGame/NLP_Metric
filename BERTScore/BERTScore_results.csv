@@ -1,0 +1,6 @@
+Variant,Pearson Corr.,Time F1 Score,max Memory Usage
+bert-base-uncased,0.322,100,100
+roberta-base,0.33,100.2,254.5
+albert-base-v2,0.311,85.7,13.9
+distilbert-base-uncased,0.323,79.1,99.9
+microsoft/deberta-base,0.339,106.8,254.3
