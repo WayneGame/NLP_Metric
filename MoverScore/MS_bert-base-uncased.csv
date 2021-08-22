@@ -1,0 +1,2 @@
+Variant,Pearson Corr.,Time F1 Score,max Memory Usage
+bert-base-uncased,0.336,734.3579887220003,3570648

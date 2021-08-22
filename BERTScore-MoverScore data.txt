@@ -1,0 +1,2 @@
+The data file for BERTScore and MoverScore is located in the main directory and named 'scores_deen.csv'
+This file contains all examples from the WMT19 shared task that are german - english translations to take into account colab limitations.

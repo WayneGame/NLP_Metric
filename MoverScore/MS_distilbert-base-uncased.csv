@@ -1,0 +1,2 @@
+Variant,Pearson Corr.,Time F1 Score,max Memory Usage
+distilbert-base-uncased,0.318,388.20743962599954,1880108
