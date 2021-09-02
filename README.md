@@ -23,3 +23,11 @@ To experiment with MoverScore, go into its directory and open the [MoverScore_2_
 - Before executing, you need to specify the ```model_name``` so it can be used as an environment variable by ```moverscore_v2```
 - Then the results of this variant will be saved as a CSV file
 - when running the script multiple times with different  ```model_name```s, all resulting files can be merged with [merge_scores](https://github.com/WayneGame/NLP_Metric/blob/main/MoverScore/merge_scores.ipynb), which will save one resulting CSV file comparing the variants
+
+### XMoverScore
+To experiment with XMoverScore and play around with different models, go into its directory and open [XMoverScore/demo.py](https://github.com/WayneGame/NLP_Metric/blob/main/XMoverScore/demo.py), where you find a modified script from the source folder.
+- The attribute ```variants``` is a list with all transformers you want to test. If its a local model, you need to specify the source folder in the [XMoverScore/scorer.py](https://github.com/WayneGame/NLP_Metric/blob/main/XMoverScore/scorer.py) - script. If the transformer is on``` huggingface.co```, an additional adjustement in [XMoverScore/scorer.py](https://github.com/WayneGame/NLP_Metric/blob/main/XMoverScore/scorer.py) could be necessary.
+- The results will be saved as a CSV file in the same folder.
+- Plotting: To get the same plots from our report the [XMoverScore/Datenaufbereitung.ipynb](https://github.com/WayneGame/NLP_Metric/blob/main/XMoverScore/Datenaufbereitung.ipynb) -notebook can be used. The values from the generated CSV-file will be used.
+
+
