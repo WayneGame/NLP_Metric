@@ -5,6 +5,7 @@ For our efficient metrics experiments we use the metrics
 - MoverScore
 - XMoverScore
 - SuperT
+
 and replace the utilized BERT model with better performing and more efficient variants. The exact thoughts and approaches can be found in [our report](https://github.com/WayneGame/NLP_Metric/blob/main/MSE_Efficient_Metrics_v3.pdf).
 
 ## Overview
@@ -30,4 +31,14 @@ To experiment with XMoverScore and play around with different models, go into it
 - The results will be saved as a CSV file in the same folder.
 - Plotting: To get the same plots from our report the [XMoverScore/Datenaufbereitung.ipynb](https://github.com/WayneGame/NLP_Metric/blob/main/XMoverScore/Datenaufbereitung.ipynb) -notebook can be used. The values from the generated CSV-file will be used.
 
+### SUPERT
+To experiment with SUPERT, open [SUPERT.ipynb](https://github.com/WayneGame/NLP_Metric/blob/main/SUPERT.ipynb). There should be the code to execute all BERT variations with SUPERT
+
+To get the other BERT variations running with the given SUPERT-Notebook:
+
+1) execute the cells, where the BERT-Models are downloaded
+2) Go to the cached download directory of the BERT models (on mac os: ```~/.cache/torch/sentence_transformers/```) and open the folder of the downloaded models
+3) Open ```modules.json``` and in line 6 rename ```....models.Transformer"``` to ```....models.DistilBERT"``` exemplary for DistilBERT (Write the correct model name depending of the BERT variation) 
+
+The correct naming of the model can be taken from the [class names](https://github.com/WayneGame/NLP_Metric/tree/main/SUPERT/sentence_transformers/models).
 
